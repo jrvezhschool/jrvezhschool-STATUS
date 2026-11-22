@@ -199,15 +199,12 @@
         padding: 12px 14px;
         font-size: 0.88rem;
       }
-      /* Թաքցնում ենք # համարակալման սյունակը */
       th:first-child, td:first-child {
         display: none;
       }
-      /* Թաքցնում ենք կարգավիճակի տեքստը՝ թողնելով ՄԻԱՅՆ ԻԿՈՆԿԱՆ */
       .status-badge .badge-text {
         display: none !important;
       }
-      /* Կոճակը դարձնում ենք կլորացված միայն իկոնկայի չափով */
       .status-badge {
         padding: 5px 8px;
         font-size: 0.95rem;
@@ -241,7 +238,7 @@
       </div>
       <div class="header-badges">
         <span id="ipBadge" class="badge badge-public">Ստուգվում է ցանցը...</span>
-        <span id="globalUpdated" class="badge" title="Գլոբալ ստուգում (Cloudflare)">Գլոբալ՝ --:--</span>
+        <span id="globalUpdated" class="badge" title="Գլոբալ ստուգում (Cloudflare / Երկրորդ ցանց)">Գլոբալ՝ --:--</span>
         <span id="localUpdated" class="badge" title="Դպրոցի ներքին ստուգում">Լոկալ՝ --:--</span>
       </div>
     </header>
@@ -279,8 +276,9 @@
 
     const localDevicesConfig = [
       { id: "mikrotik", name: "Կենտրոնական Երթուղիչ (MikroTik Core Gateway)" },
-      { id: "nvr", name: "Տեսահսկման Սերվեր (Uniview Video NVR)" },
-      { id: "printer", name: "Գրասենյակային Տպիչ (HP LaserJet Pro MFP 4103dw)" }
+      { id: "dlink",    name: "Երթուղիչ (D-Link Router)" },
+      { id: "nvr",      name: "Տեսահսկման Սերվեր (Uniview Video NVR)" },
+      { id: "printer",  name: "Գրասենյակային Տպիչ (HP LaserJet Pro MFP 4103dw)" }
     ];
 
     let servicesData = [];
@@ -323,7 +321,12 @@
         if (cfgRes.ok) {
           const cfgData = await cfgRes.json();
           if (cfgData) {
-            servicesData = Object.values(cfgData);
+            if (Array.isArray(cfgData)) {
+              servicesData = cfgData.filter(x => x);
+            } else {
+              // Դասավորում ենք ըստ բանալիների (01_, 02_, ...), որ հերթականությունը չխախտվի
+              servicesData = Object.keys(cfgData).sort().map(k => cfgData[k]);
+            }
           }
         }
       } catch (e) {
@@ -394,14 +397,12 @@
           onmouseleave="hideTooltip()">🔴<span class="badge-text"> Անհասանելի</span></span>`;
       }
 
-      // Դանդաղ է ՀԱՄԱՐՎՈՒՄ ՄԻԱՅՆ ԵԹԵ latency-ն > 1500 մվ է
       if (latVal > 1500) {
         return `<span class="status-badge status-slow" 
-          onmouseenter="showTooltip(event, 'Դանդաղ արձագանք', 'Հարցման ժամանակը գերազանցում է 1000 մվ-ը', '${code} · Latency: ${lat}')" 
+          onmouseenter="showTooltip(event, 'Դանդաղ արձագանք', 'Հարցման ժամանակը գերազանցում է 1500 մվ-ը', '${code} · Latency: ${lat}')" 
           onmouseleave="hideTooltip()">🟡<span class="badge-text"> Դանդաղ է</span></span>`;
       }
 
-      // Մինչև 1500 մվ ցանկացած պատասխան համարվում է ԿԱՆԱՉ
       return `<span class="status-badge status-ok" 
         onmouseenter="showTooltip(event, 'Բնականոն աշխատանք', 'Համակարգը հասանելի է և գործում է անխափան', '${code} · Latency: ${lat}')" 
         onmouseleave="hideTooltip()">🟢<span class="badge-text"> Բնականոն</span></span>`;

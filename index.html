@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Համակարգերի Կարգավիճակ — Ջրվեժի միջնակարգ դպրոց</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-color: #0d1117;
+      --card-bg: #161b22;
+      --card-alt: #1c2128;
+      --border-color: #30363d;
+      --border-light: #21262d;
+      --text-main: #f0f6fc;
+      --text-muted: #8b949e;
+      --primary: #58a6ff;
+      --success: #2ea043;
+      --warning: #d29922;
+      --danger: #f85149;
+      --blocked: #a371f7;
+      --stale: #6e7681;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding: 24px 16px;
+      line-height: 1.5;
+    }
+
+    .container { max-width: 980px; margin: 0 auto; }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 20px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border-color);
+      gap: 16px;
+    }
+
+    .header-titles h1 { font-size: 1.35rem; font-weight: 700; color: #fff; }
+    .header-titles p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+    
+    .header-badges { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    
+    .badge {
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-weight: 600;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge-internal { color: var(--primary); border-color: rgba(88, 166, 255, 0.4); }
+    .badge-public { color: var(--text-muted); }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      margin-bottom: 24px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-header {
+      padding: 14px 20px;
+      background: var(--card-alt);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .accordion-toggle {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+      transition: background 0.15s;
+    }
+    .accordion-toggle:hover { background: rgba(255, 255, 255, 0.03); }
+    .accordion-arrow { transition: transform 0.2s; font-size: 0.8rem; color: var(--text-muted); }
+    .accordion-arrow.open { transform: rotate(180deg); }
+    .accordion-content { display: none; }
+    .accordion-content.show { display: block; }
+
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
+    
+    th {
+      background: rgba(13, 17, 23, 0.6);
+      padding: 10px 18px;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    td { padding: 12px 18px; border-bottom: 1px solid var(--border-light); color: var(--text-main); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+    .service-link {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.15s;
+    }
+    .service-link:hover { color: var(--primary); text-decoration: underline; }
+    .service-static { color: var(--text-main); font-weight: 500; cursor: default; }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .status-ok { background: rgba(46, 160, 67, 0.15); color: #4ade80; border: 1px solid rgba(46, 160, 67, 0.3); }
+    .status-slow { background: rgba(210, 153, 34, 0.15); color: #facc15; border: 1px solid rgba(210, 153, 34, 0.3); }
+    .status-down { background: rgba(248, 81, 73, 0.15); color: #f87171; border: 1px solid rgba(248, 81, 73, 0.3); }
+    .status-blocked { background: rgba(163, 113, 247, 0.15); color: #e879f9; border: 1px solid rgba(163, 113, 247, 0.3); }
+    .status-stale { background: rgba(110, 118, 129, 0.15); color: #94a3b8; border: 1px solid rgba(110, 118, 129, 0.3); }
+
+    #tooltip {
+      position: fixed;
+      background: #1c2128;
+      border: 1px solid var(--border-color);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      color: var(--text-main);
+      pointer-events: none;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+      max-width: 280px;
+      line-height: 1.4;
+    }
+    #tooltip .tt-title { font-weight: 600; margin-bottom: 4px; color: #fff; }
+    #tooltip .tt-desc { color: var(--text-muted); }
+    #tooltip .tt-tech { font-family: monospace; color: var(--primary); margin-top: 4px; font-size: 0.72rem; }
+
+    /* --- Mobile Responsive Rules --- */
+    @media (max-width: 650px) {
+      body {
+        padding: 14px 8px;
+      }
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      .header-titles h1 {
+        font-size: 1.15rem;
+      }
+      .header-badges {
+        gap: 6px;
+      }
+      .header-badges .badge {
+        font-size: 0.7rem;
+        padding: 3px 8px;
+      }
+      .card-header, .accordion-toggle {
+        padding: 12px 14px;
+        font-size: 0.88rem;
+      }
+      /* Թաքցնում ենք # համարակալման սյունակը */
+      th:first-child, td:first-child {
+        display: none;
+      }
+      /* Թաքցնում ենք կարգավիճակի տեքստը՝ թողնելով ՄԻԱՅՆ ԻԿՈՆԿԱՆ */
+      .status-badge .badge-text {
+        display: none !important;
+      }
+      /* Կոճակը դարձնում ենք կլորացված միայն իկոնկայի չափով */
+      .status-badge {
+        padding: 5px 8px;
+        font-size: 0.95rem;
+        border-radius: 6px;
+        justify-content: center;
+      }
+      th, td {
+        padding: 10px 6px;
+        font-size: 0.8rem;
+      }
+      th:nth-child(3), th:nth-child(4),
+      td:nth-child(3), td:nth-child(4) {
+        width: 48px !important;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="tooltip"></div>
+
+  <div class="container">
+    <header>
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <img src="logo.jpg" alt="Jrvezh School Logo" style="height: 48px; width: auto; object-fit: contain;" onerror="this.style.display='none'">
+        <div class="header-titles">
+          <h1>Ջրվեժի միջնակարգ դպրոց — Ենթակառուցվածք</h1>
+          <p>Կապուղիների, կրթական հարթակների և ցանցային սարքերի իրական ժամանակի մոնիտորինգ</p>
+        </div>
+      </div>
+      <div class="header-badges">
+        <span id="ipBadge" class="badge badge-public">Ստուգվում է ցանցը...</span>
+        <span id="globalUpdated" class="badge" title="Գլոբալ ստուգում (Cloudflare)">Գլոբալ՝ --:--</span>
+        <span id="localUpdated" class="badge" title="Դպրոցի ներքին ստուգում">Լոկալ՝ --:--</span>
+      </div>
+    </header>
+
+    <!-- Լոկալ Ենթակառուցվածք (Ցուցադրվում է ՄԻԱՅՆ ներքին ցանցից) -->
+    <div id="localInfraCard" class="card" style="display: none;">
+      <div class="card-header">
+        <span>🔒 Տեղական Ենթակառուցվածք (Լոկալ ցանց)</span>
+        <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">Հասանելի է միայն ներքին ցանցից</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 50px;">#</th>
+            <th>Սարքավորում / Հանգույց</th>
+            <th style="width: 220px;">Կարգավիճակ</th>
+          </tr>
+        </thead>
+        <tbody id="localDeviceRows"></tbody>
+      </table>
+    </div>
+
+    <!-- Կրթական և Պետական Համակարգեր -->
+    <div class="card">
+      <div class="card-header">
+        <span>Ծառայություններ և Կրթական Համակարգեր</span>
+        <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">Ստուգումը՝ 600 վրկ (10ր) պարբերականությամբ</span>
+      </div>
+      <div id="servicesAccordionContainer"></div>
+    </div>
+  </div>
+
+  <script>
+    const FIREBASE_PUBLIC_URL = "https://jrvezhschool-status-default-rtdb.europe-west1.firebasedatabase.app";
+
+    const localDevicesConfig = [
+      { id: "mikrotik", name: "Կենտրոնական Երթուղիչ (MikroTik Core Gateway)" },
+      { id: "nvr", name: "Տեսահսկման Սերվեր (Uniview Video NVR)" },
+      { id: "printer", name: "Գրասենյակային Տպիչ (HP LaserJet Pro MFP 4103dw)" }
+    ];
+
+    let servicesData = [];
+    let probeState = null;
+    let globalState = null;
+
+    async function checkClientNetwork() {
+      const badge = document.getElementById("ipBadge");
+      try {
+        const res = await fetch("https://api.ipify.org?format=json");
+        const data = await res.json();
+        const userIP = data.ip || "";
+
+        const encoder = new TextEncoder();
+        const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(userIP));
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const ipHash = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+
+        const TARGET_IP_HASH = "4104760a3ea4b1559e2c1cd824c5e56ab681ac6093e8bdca07372ccf7fd06679";
+
+        if (ipHash === TARGET_IP_HASH) {
+          badge.textContent = `Դպրոցի ցանց (${userIP})`;
+          badge.className = "badge badge-internal";
+          document.getElementById("localInfraCard").style.display = "block";
+        } else {
+          badge.textContent = `Արտաքին ցանց (${userIP})`;
+          badge.className = "badge badge-public";
+          document.getElementById("localInfraCard").style.display = "none";
+        }
+      } catch (e) {
+        badge.textContent = "Արտաքին ցանց";
+        badge.className = "badge badge-public";
+        document.getElementById("localInfraCard").style.display = "none";
+      }
+    }
+
+    async function loadData() {
+      try {
+        const cfgRes = await fetch(`${FIREBASE_PUBLIC_URL}/config/services.json`);
+        if (cfgRes.ok) {
+          const cfgData = await cfgRes.json();
+          if (cfgData) {
+            servicesData = Object.values(cfgData);
+          }
+        }
+      } catch (e) {
+        console.warn("Config fetch failed", e);
+      }
+
+      try {
+        const res = await fetch(`${FIREBASE_PUBLIC_URL}/status/local_probe.json`);
+        if (res.ok) {
+          probeState = await res.json();
+          if (probeState && probeState.time_str) {
+            document.getElementById("localUpdated").textContent = `Լոկալ՝ ${probeState.time_str.split(" ")[1]}`;
+          } else {
+            document.getElementById("localUpdated").textContent = "Լոկալ՝ --:--";
+          }
+        }
+      } catch (e) {
+        console.warn("Probe fetch failed", e);
+      }
+
+      try {
+        const gRes = await fetch(`${FIREBASE_PUBLIC_URL}/status/global_probe.json`);
+        if (gRes.ok) {
+          globalState = await gRes.json();
+          if (globalState) {
+            if (globalState.time_str) {
+              const parts = globalState.time_str.split(" ");
+              document.getElementById("globalUpdated").textContent = `Գլոբալ՝ ${parts[1] || parts[0]}`;
+            } else if (globalState.timestamp) {
+              const d = new Date(globalState.timestamp * 1000);
+              const timeStr = d.toTimeString().split(" ")[0];
+              document.getElementById("globalUpdated").textContent = `Գլոբալ՝ ${timeStr}`;
+            } else {
+              document.getElementById("globalUpdated").textContent = "Գլոբալ՝ Ակտիվ";
+            }
+          } else {
+            document.getElementById("globalUpdated").textContent = "Գլոբալ՝ --:--";
+          }
+        }
+      } catch (e) {
+        console.warn("Global probe fetch failed", e);
+      }
+
+      renderAll();
+    }
+
+    function getStatusBadge(itemData, isStale) {
+      if (isStale || !itemData) {
+        return `<span class="status-badge status-stale" 
+          onmouseenter="showTooltip(event, 'Տվյալները չեն կարող բեռնվել', 'Գործակալն անհասանելի է կամ տվյալները հնացել են (>10ր)', 'Status: Data Stale / Offline')" 
+          onmouseleave="hideTooltip()">⚪<span class="badge-text"> Անհասանելի</span></span>`;
+      }
+
+      const st = itemData.status;
+      const code = itemData.code || "OK";
+      const latVal = typeof itemData.latency === "number" ? itemData.latency : parseInt(itemData.latency) || 0;
+      const lat = itemData.latency ? `${itemData.latency}ms` : "--";
+
+      if (st === "blocked") {
+        return `<span class="status-badge status-blocked" 
+          onmouseenter="showTooltip(event, 'Մուտքն արգելված է', 'Սերվերը մերժել է հարցումը', '${code} · Access Restricted')" 
+          onmouseleave="hideTooltip()">🚫<span class="badge-text"> Արգելված է</span></span>`;
+      }
+
+      if (st === "down") {
+        return `<span class="status-badge status-down" 
+          onmouseenter="showTooltip(event, 'Կապն ընդհատված է', 'Սերվերը չի պատասխանում հարցմանը', '${code}')" 
+          onmouseleave="hideTooltip()">🔴<span class="badge-text"> Անհասանելի</span></span>`;
+      }
+
+      // Դանդաղ է ՀԱՄԱՐՎՈՒՄ ՄԻԱՅՆ ԵԹԵ latency-ն > 1500 մվ է
+      if (latVal > 1500) {
+        return `<span class="status-badge status-slow" 
+          onmouseenter="showTooltip(event, 'Դանդաղ արձագանք', 'Հարցման ժամանակը գերազանցում է 1000 մվ-ը', '${code} · Latency: ${lat}')" 
+          onmouseleave="hideTooltip()">🟡<span class="badge-text"> Դանդաղ է</span></span>`;
+      }
+
+      // Մինչև 1500 մվ ցանկացած պատասխան համարվում է ԿԱՆԱՉ
+      return `<span class="status-badge status-ok" 
+        onmouseenter="showTooltip(event, 'Բնականոն աշխատանք', 'Համակարգը հասանելի է և գործում է անխափան', '${code} · Latency: ${lat}')" 
+        onmouseleave="hideTooltip()">🟢<span class="badge-text"> Բնականոն</span></span>`;
+    }
+
+    function renderAll() {
+      let isStale = true;
+      if (probeState && probeState.timestamp) {
+        const nowSec = Math.floor(Date.now() / 1000);
+        if (nowSec - probeState.timestamp < 600) isStale = false;
+      }
+
+      let isGlobalStale = true;
+      if (globalState && globalState.timestamp) {
+        const nowSec = Math.floor(Date.now() / 1000);
+        if (nowSec - globalState.timestamp < 600) isGlobalStale = false;
+      }
+
+      const localTbody = document.getElementById("localDeviceRows");
+      localTbody.innerHTML = "";
+      localDevicesConfig.forEach((dev, idx) => {
+        const devData = probeState && probeState.local ? probeState.local[dev.id] : null;
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td style="color: var(--text-muted);">${idx + 1}</td>
+          <td><span class="service-static">${dev.name}</span></td>
+          <td>${getStatusBadge(devData, isStale)}</td>
+        `;
+        localTbody.appendChild(row);
+      });
+
+      const categories = [...new Set(servicesData.map(s => s.category || "Այլ"))];
+      const accContainer = document.getElementById("servicesAccordionContainer");
+      accContainer.innerHTML = "";
+
+      categories.forEach((cat, cIdx) => {
+        const catServices = servicesData.filter(s => (s.category || "Այլ") === cat);
+        let hasWarning = false;
+        let hasError = false;
+
+        catServices.forEach(s => {
+          const sData = probeState && probeState.services ? probeState.services[s.id] : null;
+          if (!isStale && sData) {
+            if (sData.status === "slow") hasWarning = true;
+            if (sData.status === "down" || sData.status === "blocked") hasError = true;
+          }
+        });
+
+        let warningBadge = "";
+        if (hasError) warningBadge = ` <span style="font-size:0.8rem;">❗</span>`;
+        else if (hasWarning) warningBadge = ` <span style="font-size:0.8rem;">⚠️</span>`;
+
+        const groupDiv = document.createElement("div");
+        groupDiv.innerHTML = `
+          <button class="accordion-toggle" onclick="toggleAccordion('acc_${cIdx}', this)">
+            <span>${cat} (${catServices.length})${warningBadge}</span>
+            <span class="accordion-arrow open">▼</span>
+          </button>
+          <div id="acc_${cIdx}" class="accordion-content show">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 50px;">#</th>
+                  <th>Ծառայություն</th>
+                  <th style="width: 200px;">Գլոբալ վիճակ</th>
+                  <th style="width: 200px;">Դպրոցի ցանցից</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${catServices.map((s, sIdx) => {
+                  const sData = probeState && probeState.services ? probeState.services[s.id] : null;
+                  const gData = globalState && globalState.services ? globalState.services[s.id] : null;
+                  return `
+                    <tr>
+                      <td style="color: var(--text-muted);">${sIdx + 1}</td>
+                      <td>
+                        <a href="${s.url}" target="_blank" rel="noopener noreferrer" class="service-link">
+                          ${s.name} <span style="font-size: 0.7rem; color: var(--text-muted);">↗</span>
+                        </a>
+                      </td>
+                      <td>${getStatusBadge(gData, isGlobalStale)}</td>
+                      <td>${getStatusBadge(sData, isStale)}</td>
+                    </tr>
+                  `;
+                }).join("")}
+              </tbody>
+            </table>
+          </div>
+        `;
+        accContainer.appendChild(groupDiv);
+      });
+    }
+
+    function toggleAccordion(id, btn) {
+      const content = document.getElementById(id);
+      const arrow = btn.querySelector(".accordion-arrow");
+      if (content.classList.contains("show")) {
+        content.classList.remove("show");
+        arrow.classList.remove("open");
+      } else {
+        content.classList.add("show");
+        arrow.classList.add("open");
+      }
+    }
+
+    const tt = document.getElementById("tooltip");
+    function showTooltip(e, title, desc, tech) {
+      tt.innerHTML = `
+        <div class="tt-title">${title}</div>
+        <div class="tt-desc">${desc}</div>
+        <div class="tt-tech">${tech}</div>
+      `;
+      tt.style.display = "block";
+      moveTooltip(e);
+    }
+    function moveTooltip(e) {
+      tt.style.left = (e.clientX + 14) + "px";
+      tt.style.top = (e.clientY + 14) + "px";
+    }
+    function hideTooltip() { tt.style.display = "none"; }
+    window.addEventListener("mousemove", (e) => {
+      if (tt.style.display === "block") moveTooltip(e);
+    });
+
+    checkClientNetwork();
+    loadData();
+    setInterval(loadData, 60000);
+  </script>
+</body>
+</html>
